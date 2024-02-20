@@ -49,3 +49,12 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+*.pt
+.vscode
+install/
+log/
+src/darknet_ros/
+src/yolov8_ros/
+src/zed-ros2-examples/
+src/zed-ros2-wrapper/
