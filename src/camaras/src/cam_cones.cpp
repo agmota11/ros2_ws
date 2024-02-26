@@ -28,6 +28,8 @@ using std::placeholders::_1;
 // Subscribe to camera info
 #include <sensor_msgs/msg/camera_info.hpp>
 
+#include <limits>
+
 using namespace std::chrono_literals;
 #define MAXLISTSIZE 30
 
@@ -116,10 +118,14 @@ private:
             int centerIdx = coneList[i].pixelpos[0] + msg->width * coneList[i].pixelpos[1];
 
             // Output the measure
-            if (depths[centerIdx] > 0)
+            if (depths[centerIdx] > 0 && depths[centerIdx] < std::numeric_limits<float>::max())
+            {
                 coneList[i].pixeldepth = depths[centerIdx];
+            }
             else
+            {
                 coneList[i].pixeldepth = 0;
+            }
         }
     }
 
@@ -150,7 +156,6 @@ private:
         X = Z / fx * (u - cx)
         Y = Z / fy * (v - cy)
         */
-        RCLCPP_INFO(this->get_logger(), "(u, v, z) -> (%d, %d, %d)", u, v, z);
         float *point3D = (float *)malloc(3 * sizeof(float));
 
         point3D[0] = z * (u - CameraInfo.cx) / CameraInfo.fx;
@@ -162,7 +167,6 @@ private:
     void timer_callback()
     {
         custom_msgs::msg::ConeArray cone_list;
-
         for (int i = 0; i < detected_cones; i++)
         {
             point = screenTo3D(coneList[i].pixelpos[0], coneList[i].pixelpos[1], coneList[i].pixeldepth);
@@ -173,15 +177,18 @@ private:
                 cone.y_pos = point[1];
                 cone.z_pos = point[2];
                 cone.color = coneList[i].cone_color;
-                cone_list.cones.push_back(cone);
+                if (cone.z_pos > 0)
+                {
+                    cone_list.cones.push_back(cone);
+                }
 
                 free(point);
             }
         }
-        cone_list.cone_number = detected_cones;
+        cone_list.cone_number = cone_list.cones.size();
 
         cone_list.header.stamp = rclcpp::Clock{}.now();
-        RCLCPP_INFO(this->get_logger(), "Publishing %d cones...", detected_cones);
+        RCLCPP_INFO(this->get_logger(), "Publishing %d cones...", cone_list.cone_number);
         chatter_pub->publish(cone_list);
     };
 };
