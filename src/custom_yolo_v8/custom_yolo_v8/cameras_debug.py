@@ -104,6 +104,13 @@ class CamerasDebugNode(Node):
         for cone in self.cone_list:
             text = f"({cone.x_pos:.2f}, {cone.y_pos:.2f}, {cone.z_pos:.2f})"
             cv2.putText(img, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (0, 0, 0))
+            cv2.rectangle(
+                img,
+                (3, y - 5),
+                (6, y),
+                self.colors[cone.color],
+                cv2.FILLED,
+            )
             y += 20
         cv2.putText(
             img,
