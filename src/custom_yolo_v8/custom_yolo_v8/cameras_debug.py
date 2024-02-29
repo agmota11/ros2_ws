@@ -34,7 +34,16 @@ class CamerasDebugNode(Node):
             qos_profile=1,
         )
 
-        # this->create_publisher<custom_msgs::msg::ConeArray>("/CamConeList", qos);
+        """
+        Subscriptor de las bounding boxes de personas generadas por el modelo.
+        """
+        self.bounding_box_subscriber = self.create_subscription(
+            msg_type=ImageWithBoundingBox,
+            topic="/yolov8/results/personas",
+            callback=self.yolo_personas_callback,
+            qos_profile=1,
+        )
+
         self.bounding_box_subscriber = self.create_subscription(
             msg_type=ConeArray,
             topic="/CamConeList",
@@ -46,6 +55,7 @@ class CamerasDebugNode(Node):
         self.image = None
         self.bridge = CvBridge()
         self.cone_list = []
+        self.bounding_boxes_personas = []
         # self.loop()
         # self.create_timer(0.1, self.draw_image)
         self.colors = {
@@ -53,16 +63,21 @@ class CamerasDebugNode(Node):
             "large_orange_cone": (255, 0, 0),
             "blue_cone": (50, 200, 180),
             "yellow_cone": (240, 240, 0),
+            "person": (0, 0, 0),
         }
 
     def cone_list_callback(self, msg: ConeArray):
         self.cone_list = msg.cones
-        self.get_logger().info(f"Number of cones {msg.cone_number}")
+        # self.get_logger().info(f"Number of cones {msg.cone_number}")
 
     def yolo_results_callback(self, msg: ImageWithBoundingBox):
         self.bounding_boxes = msg.bounding_boxes
         self.image = self.bridge.imgmsg_to_cv2(msg.rgb_image, desired_encoding="rgb8")
         self.draw_image()
+
+    def yolo_personas_callback(self, msg: ImageWithBoundingBox):
+        self.bounding_boxes_personas = msg.bounding_boxes
+        self.get_logger().info(f"Drawing {len(self.bounding_boxes_personas)} people")
 
     def draw_image(self):
         if self.image is None:
@@ -70,6 +85,9 @@ class CamerasDebugNode(Node):
 
         img = self.image
         for bb in self.bounding_boxes:
+            self.draw_rect(img, bb)
+
+        for bb in self.bounding_boxes_personas:
             self.draw_rect(img, bb)
 
         self.draw_cones_dist(img)

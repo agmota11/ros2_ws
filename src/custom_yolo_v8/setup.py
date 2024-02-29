@@ -22,6 +22,7 @@ setup(
             "custom_yolo_v8 = custom_yolo_v8.custom_yolo_v8:main",
             "video_publisher = custom_yolo_v8.VideoPublisher:main",
             "cameras_debug = custom_yolo_v8.cameras_debug:main",
+            "yolov8_personas = custom_yolo_v8.yolov8_personas:main",
         ],
     },
 )
