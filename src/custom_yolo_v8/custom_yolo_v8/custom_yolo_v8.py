@@ -92,7 +92,6 @@ class YoloNode(Node):
         """
         self.image = msg
         img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        # img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
 
         results = self.model.predict(img, conf=self.conf)
         bounding_boxes = self.get_bounding_boxes_from_results(results)
@@ -100,9 +99,22 @@ class YoloNode(Node):
         self.publish_bounding_boxes(bounding_boxes)
 
     def depth_received_callback(self, msg: Image):
+        """
+        Inicializa la imagen de profundidad
+
+        Args:
+            msg (Image): Imagen que represanta la profundidad
+        """
         self.depth_image = msg
 
     def draw_rect(self, image, box):
+        """
+        Dibuja un rectangulo sobre la imagen
+
+        Args:
+            image (Image): Imagen RGB
+            box (BoundingBox): Bounding Box del mensaje
+        """
         top_left = (box.xmin, box.ymin)
         bottom_right = (box.xmax, box.ymax)
 

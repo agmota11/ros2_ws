@@ -44,6 +44,9 @@ class CamerasDebugNode(Node):
             qos_profile=1,
         )
 
+        """
+        Subscriptor a la lista de conos
+        """
         self.bounding_box_subscriber = self.create_subscription(
             msg_type=ConeArray,
             topic="/CamConeList",
@@ -56,8 +59,7 @@ class CamerasDebugNode(Node):
         self.bridge = CvBridge()
         self.cone_list = []
         self.bounding_boxes_personas = []
-        # self.loop()
-        # self.create_timer(0.1, self.draw_image)
+
         self.colors = {
             "orange_cone": (244, 88, 4),
             "large_orange_cone": (255, 0, 0),
@@ -67,19 +69,40 @@ class CamerasDebugNode(Node):
         }
 
     def cone_list_callback(self, msg: ConeArray):
+        """
+        Inicializa la lista de conos
+
+        Args:
+            msg (ConeArray): Lista de los conos con sus posiciones y color
+        """
         self.cone_list = msg.cones
-        # self.get_logger().info(f"Number of cones {msg.cone_number}")
 
     def yolo_results_callback(self, msg: ImageWithBoundingBox):
+        """
+        Recibe los resultados del Nodo cam_cones
+
+        Args:
+            msg (ImageWithBoundingBox): Es la imagen con la lista de bounding boxes. Esta
+                                        todo en el mismo mensaje para evitar problemas de concurrencia.
+        """
         self.bounding_boxes = msg.bounding_boxes
         self.image = self.bridge.imgmsg_to_cv2(msg.rgb_image, desired_encoding="rgb8")
         self.draw_image()
 
     def yolo_personas_callback(self, msg: ImageWithBoundingBox):
+        """Se subsucribe al las bounding boxes del nodo de personas. No se usa la imagen de aqui para que si va desincronizado,
+            solo afecte a las cajas de las personas.
+
+        Args:
+            msg (ImageWithBoundingBox): Imagen con bounding boxes
+        """
         self.bounding_boxes_personas = msg.bounding_boxes
         self.get_logger().info(f"Drawing {len(self.bounding_boxes_personas)} people")
 
     def draw_image(self):
+        """
+        Dibuja la imagen con las bounding boxes en pantalla.
+        """
         if self.image is None:
             return
 
@@ -99,6 +122,13 @@ class CamerasDebugNode(Node):
         cv2.waitKey(1)
 
     def draw_rect(self, image, box):
+        """
+        Dibuja un rectangulo sobre la imagen
+
+        Args:
+            image (Image): Imagen RGB
+            box (BoundingBox): Bounding Box del mensaje
+        """
         top_left = (box.xmin, box.ymin)
         bottom_right = (box.xmax, box.ymax)
 
@@ -106,11 +136,24 @@ class CamerasDebugNode(Node):
         self.draw_center_point(image, box)
 
     def draw_center_point(self, image, box):
+        """
+        Dibuja el punto medio, que es donde se calcula la distancia
+
+        Args:
+            image (Image): Imagen
+            box (BoundingBox): BoundingBox
+        """
         x = (box.xmax - box.xmin) // 2 + box.xmin
         y = (box.ymax - box.ymin) // 2 + box.ymin
         cv2.circle(image, (x, y), 1, (0, 255, 0), cv2.FILLED)
 
     def draw_cones_dist(self, img):
+        """
+        Dibuja en pantalla un rectangulo blanco en el que está la lista de la coordenadas de los conos que se detectan y su color.
+
+        Args:
+            img (Image): Imagen
+        """
         x, y = 10, 10
         cv2.rectangle(
             img,

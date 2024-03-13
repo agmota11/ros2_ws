@@ -6,19 +6,37 @@ import cv2
 
 
 class VideoPublisher(Node):
+    """
+    Este nodo imita el comportamiento que tendrían las camaras (solo la imagen).
+    A partir de un video publica los frames
+
+    Args:
+        Node (Node): Nodo de ros
+    """
+
     def __init__(self):
         super().__init__("video_publisher")
+        """
+        Publisher de las imagenes del video.
+        """
         self.publisher = self.create_publisher(
             msg_type=Image,
             topic="/zed/zed_node/rgb_raw/image_raw_color",
             qos_profile=10,
         )
+
+        """
+        Frecuencia de publicacion
+        """
         self.timer = self.create_timer(0.1, self.publish_image)
         self.bridge = CvBridge()
 
         self.cap = cv2.VideoCapture("/home/agmota/Downloads/Video-conos-demo.mp4")
 
     def publish_image(self):
+        """
+        Publica la imagen en el topicº
+        """
         ret, frame = self.cap.read()
 
         if ret:
