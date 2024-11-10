@@ -1,0 +1,2 @@
+int8 a
+int8 b
